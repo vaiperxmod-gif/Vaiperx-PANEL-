@@ -1,191 +1,173 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
-        :root { 
-            --main: #ff0000; 
-            --card: #0f0f0f; 
-            --bg: #050505; 
-        }
+        :root { --main: #ff0000; --bg: #000000; --card: #0f0f0f; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
             font-family: -apple-system, sans-serif;
-            background-color: #050505 !important; /* บังคับพื้นหลังดำ */
-            color: white; margin: 0; padding: 0;
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            margin: 0; padding: 0;
             overflow-x: hidden; -webkit-user-select: none;
         }
 
-        #toast {
-            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 0, 0, 0.9); color: white;
-            padding: 10px 25px; border-radius: 50px; font-size: 13px; font-weight: bold;
-            opacity: 0; transition: 0.4s; z-index: 10001; box-shadow: 0 0 20px var(--main);
-            pointer-events: none; white-space: nowrap;
-        }
+        #bg-canvas { position: fixed; inset: 0; z-index: -1; opacity: 0.5; pointer-events: none; }
 
-        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; width: 100%; height: 100%; opacity: 0.5; }
-
+        /* --- LOADER --- */
         #loader {
-            position: fixed; inset: 0;
-            background: black; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 10000;
+            position: fixed; inset: 0; background: #000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000;
         }
-        
-        .vx-logo {
+        .vx-logo-frame {
             width: 100px; height: 100px; border: 4px solid var(--main);
-            border-radius: 25px; display: flex; justify-content: center;
-            align-items: center; box-shadow: 0 0 40px var(--main);
+            border-radius: 25px; overflow: hidden; display: flex;
+            justify-content: center; align-items: center;
+            box-shadow: 0 0 40px var(--main);
             animation: pulse 1.5s infinite; margin-bottom: 25px;
-            overflow: hidden; background: #000;
         }
-        
-        .vx-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .vx-logo-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .progress-box { width: 70%; height: 6px; background: #222; border-radius: 10px; overflow: hidden; }
+        .progress-bar { width: 0%; height: 100%; background: var(--main); box-shadow: 0 0 15px var(--main); transition: width 0.1s; }
 
-        .progress-container { width: 70%; height: 6px; background: #222; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
-        .bar { width: 0%; height: 100%; background: var(--main); box-shadow: 0 0 20px var(--main); }
-
-        #content { display: none; padding: 20px; animation: slideIn 0.6s ease-out; padding-bottom: 50px; }
+        /* --- MAIN UI --- */
+        #main-ui { display: none; padding: 20px; animation: slideIn 0.5s ease; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .version-tag { background: var(--main); color: white; font-size: 11px; font-weight: 900; padding: 4px 12px; border-radius: 6px; box-shadow: 0 0 15px var(--main); }
+        .ver-tag { background: var(--main); color: #fff; padding: 4px 12px; border-radius: 8px; font-weight: 900; font-size: 11px; box-shadow: 0 0 15px var(--main); }
 
         .card {
-            background: #0f0f0f !important; /* บังคับสีการ์ด */
-            border-radius: 20px; padding: 18px;
+            background: #0f0f0f !important; border-radius: 20px; padding: 18px;
             margin-bottom: 15px; border: 1px solid #1a1a1a;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        .section-title { font-size: 12px; color: var(--main); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; font-weight: 900; display: flex; align-items: center; }
+        .section-title { font-size: 12px; color: var(--main); font-weight: 900; margin-bottom: 15px; display: flex; align-items: center; letter-spacing: 1px; }
         .section-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--main), transparent); margin-left: 10px; opacity: 0.3; }
 
         .item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1a1a1a; }
         .item:last-child { border-bottom: none; }
-        .item-label b { display: block; font-size: 14px; color: #eee; }
-        .item-label span { font-size: 11px; color: #666; }
+        .label b { display: block; font-size: 14px; color: #eee !important; }
+        .label span { font-size: 11px; color: #555 !important; }
 
+        /* --- SWITCH --- */
         .switch { position: relative; width: 42px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #333; transition: .3s; border-radius: 34px; }
+        .slider { position: absolute; cursor: pointer; inset: 0; background: #333; transition: .3s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background: var(--main); box-shadow: 0 0 15px var(--main); }
         input:checked + .slider:before { transform: translateX(20px); }
 
+        /* --- GRID --- */
         .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .game-card { background: #151515; border-radius: 18px; padding: 15px; text-align: center; border: 1px solid #222; }
-        .game-img { width: 55px; height: 55px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--main); object-fit: cover; }
-        .btn-open { background: var(--main); border: none; color: white; width: 100%; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .game-icon { width: 55px; height: 55px; border-radius: 12px; border: 1px solid var(--main); margin-bottom: 10px; object-fit: cover; }
+        .btn-launch { background: var(--main); border: none; color: white; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 11px; }
 
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        #toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: var(--main); color: white; padding: 10px 25px; border-radius: 50px; font-weight: bold; opacity: 0; transition: 0.4s; z-index: 10001; }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
         @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <canvas id="bg-canvas"></canvas>
-    <div id="toast">SYSTEM ACTIVATED!</div>
+    <div id="toast">ACTIVATED!</div>
 
     <div id="loader">
-        <div class="vx-logo">
-            <img src="https://i.postimg.cc/cCBmz1FN/87C76E66-5A35-4C58-A93D-FC902CF01AD6.jpg" alt="Logo">
+        <div class="vx-logo-frame">
+            <img src="https://i.postimg.cc/cCBmz1FN/87C76E66-5A35-4C58-A93D-FC902CF01AD6.jpg">
         </div>
-        <div style="font-size:12px; color:#ff0000; margin-bottom:15px; letter-spacing:3px; font-weight:bold">VAIPERX PANEL OB52</div>
-        <div class="progress-container"><div class="bar" id="bar"></div></div>
-        <div id="p-text" style="margin-top:10px; font-size:14px; color:#444">0%</div>
+        <div style="font-size:12px; color:var(--main); font-weight:bold; letter-spacing:3px; margin-bottom:15px">VAIPERX PANEL OB52</div>
+        <div class="progress-box"><div class="progress-bar" id="bar"></div></div>
+        <div id="p-text" style="margin-top:10px; color:#444">0%</div>
     </div>
 
-    <div id="content">
+    <div id="main-ui">
         <div class="header">
-            <h1 style="margin:0; font-size:24px; font-weight:900">VAIPERX <span style="color:#ff0000">PANEL</span></h1>
-            <div class="version-tag">Premium</div>
+            <h1 style="margin:0; font-size:24px; font-weight:900">VAIPERX <span style="color:var(--main)">PANEL</span></h1>
+            <div class="ver-tag">PREMIUM</div>
         </div>
 
-        <div class="card" style="border: 1px solid #f005; background: linear-gradient(145deg, #0f0f0f, #1a0505);">
-            <div class="section-title">🛡️ Anti-Ban Security (ระบบป้องกัน)</div>
+        <div class="card" style="border: 1px solid #f003; background: linear-gradient(145deg, #0f0f0f, #1a0505);">
+            <div class="section-title">🛡️ ANTI-BAN SECURITY</div>
             <div class="item">
-                <div class="item-label"><b>Bypass Anticheat</b><span>ข้ามการตรวจจับไฟล์ระบบ</span></div>
-                <label class="switch"><input type="checkbox" onchange="handleToggle('🛡️ Bypass On')"><span class="slider"></span></label>
+                <div class="label"><b>Bypass Anticheat</b><span>ข้ามการตรวจจับไฟล์ระบบ</span></div>
+                <label class="switch"><input type="checkbox" onchange="showT('Bypass On')"><span class="slider"></span></label>
             </div>
             <div class="item">
-                <div class="item-label"><b>Anti-Report 100%</b><span>กันรีพอร์ต</span></div>
-                <label class="switch"><input type="checkbox" onchange="handleToggle('🛡️ Anti-Report On')"><span class="slider"></span></label>
+                <div class="label"><b>Anti-Report 100%</b><span>ป้องกันการถูกรายงาน</span></div>
+                <label class="switch"><input type="checkbox" onchange="showT('Anti-Report On')"><span class="slider"></span></label>
             </div>
             <div class="item">
-                <div class="item-label"><b>Fix Blacklist</b><span>แก้รหัสติดดำ / จับคู่ช้า</span></div>
-                <label class="switch"><input type="checkbox" onchange="handleToggle('🛡️ Clean Blacklist')"><span class="slider"></span></label>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="section-title">🎯 AIMBOT & DRAG (ช่วยดึง/ดูด)</div>
-            <div class="item">
-                <div class="item-label"><b>Enable Headshot</b><span>เปิดใช้งานดูดหัว</span></div>
-                <label class="switch"><input type="checkbox" onchange="handleToggle('🎯 Magnetic On')"><span class="slider"></span></label>
-            </div>
-            <div class="item">
-                <div class="item-label"><b>Auto Drag Head</b><span>ช่วยลากหัว</span></div>
-                <label class="switch"><input type="checkbox" onchange="handleToggle('🎯 Drag Assist On')"><span class="slider"></span></label>
-            </div>
-            <div class="item">
-                <div class="item-label"><b>Regedit Headshot</b><span>เพิ่มความคมในการยิงหัว</span></div>
-                <label class="switch"><input type="checkbox" onchange="handleToggle('🎯 Regedit Active')"><span class="slider"></span></label>
+                <div class="label"><b>Fix Blacklist</b><span>แก้รหัสติดดำ / จับคู่ช้า</span></div>
+                <label class="switch"><input type="checkbox" onchange="showT('Blacklist Fixed')"><span class="slider"></span></label>
             </div>
         </div>
 
         <div class="card">
-            <div class="section-title">🚀 System Optimizer</div>
+            <div class="section-title">🎯 AIMBOT & DRAG ASSIST</div>
             <div class="item">
-                <div class="item-label"><b>Ultra FPS Boost</b><span>ปลดล็อคเฟรมเรตสูงสุด</span></div>
-                <label class="switch"><input type="checkbox" onchange="handleToggle('🚀 FPS Boosted')"><span class="slider"></span></label>
+                <div class="label"><b>Enable Headshot</b><span>เปิดใช้งานดูดหัว</span></div>
+                <label class="switch"><input type="checkbox" onchange="showT('Headshot Active')"><span class="slider"></span></label>
+            </div>
+            <div class="item">
+                <div class="label"><b>Auto Drag Head</b><span>ช่วยลากหัว (ดึงเป้าง่าย)</span></div>
+                <label class="switch"><input type="checkbox" onchange="showT('Drag Assist On')"><span class="slider"></span></label>
+            </div>
+            <div class="item">
+                <div class="label"><b>Regedit Headshot</b><span>เพิ่มความคมในการยิงหัว</span></div>
+                <label class="switch"><input type="checkbox" onchange="showT('Regedit Active')"><span class="slider"></span></label>
             </div>
         </div>
 
         <div class="card">
-            <div class="section-title">📲 Supported Launch</div>
+            <div class="section-title">🚀 SYSTEM OPTIMIZER</div>
+            <div class="item">
+                <div class="label"><b>Ultra FPS Boost</b><span>ปลดล็อคเฟรมเรตสูงสุด</span></div>
+                <label class="switch"><input type="checkbox" onchange="showT('FPS Boosted')"><span class="slider"></span></label>
+            </div>
+            <div class="item">
+                <div class="label"><b>Sensitivity X/Y</b><span>ปรับความไวการตอบสนอง</span></div>
+                <label class="switch"><input type="checkbox" onchange="showT('Sens Updated')"><span class="slider"></span></label>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">📲 SUPPORTED LAUNCH</div>
             <div class="game-grid">
                 <div class="game-card">
-                    <img src="https://i.postimg.cc/3xLdbZPW/IMG-3102.jpg" class="game-img"><br>
-                    <button class="btn-open" onclick="location.href='freefire://'">FREE FIRE</button>
+                    <img src="https://i.postimg.cc/J0JD2yn4/IMG-3102.jpg" class="game-icon">
+                    <button class="btn-launch" onclick="location.href='freefire://'">FREE FIRE</button>
                 </div>
                 <div class="game-card">
-                    <img src="https://i.postimg.cc/3xLdbZPW/IMG-3102.jpg" class="game-img"><br>
-                    <button class="btn-open" onclick="location.href='freefiremax://'">FF MAX</button>
+                    <img src="https://i.postimg.cc/J0JD2yn4/IMG-3102.jpg" class="game-icon">
+                    <button class="btn-launch" onclick="location.href='freefiremax://'">FF MAX</button>
                 </div>
             </div>
         </div>
-        
-        <p style="text-align:center; color:#444; font-size:10px; font-weight:bold; letter-spacing:2px">VAIPERX PANEL OB52 © 2026</p>
+
+        <p style="text-align:center; color:#333; font-size:10px; font-weight:bold; letter-spacing:2px">VAIPERX PANEL OB52 © 2026</p>
     </div>
 
     <script>
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.style.opacity = '1';
-            setTimeout(() => { toast.style.opacity = '0'; }, 1500);
-        }
-
-        function handleToggle(msg) {
-            showToast(msg);
+        function showT(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.opacity = '1';
+            setTimeout(() => { t.style.opacity = '0'; }, 1500);
         }
 
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
         let particles = [];
-        for(let i=0; i<40; i++){ particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2, v: Math.random()*1.2 }); }
+        for(let i=0; i<35; i++){ particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2, v: Math.random()*0.8 }); }
         function draw(){
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            ctx.fillStyle = '#ff0000';
-            particles.forEach(p => {
-                ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill();
-                p.y -= p.v; if(p.y < 0) p.y = canvas.height;
-            });
+            ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle = '#ff0000';
+            particles.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill(); p.y -= p.v; if(p.y < 0) p.y = canvas.height; });
             requestAnimationFrame(draw);
         }
         draw();
@@ -197,14 +179,12 @@
                 p = 100; clearInterval(int);
                 setTimeout(() => {
                     document.getElementById('loader').style.display = 'none';
-                    document.getElementById('content').style.display = 'block';
+                    document.getElementById('main-ui').style.display = 'block';
                 }, 500);
             }
             document.getElementById('bar').style.width = p+'%';
             document.getElementById('p-text').innerText = p+'%';
-        }, 50);
+        }, 60);
     </script>
 </body>
 </html>
-
-
