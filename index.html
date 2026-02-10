@@ -1,0 +1,238 @@
+// --- VAIPERX PRO OB52 - ULTRA RED EDITION (LOGO VERSION) ---
+const themeColor = "#ff0000"; 
+const bgColor = "#050505"; 
+const cardColor = "#0f0f0f"; 
+const ffIcon = "https://i.postimg.cc/J0JD2yn4/IMG-3102.jpg"; 
+
+// 1.
+const appLogo = "https://i.postimg.cc/cCBmz1FN/87C76E66-5A35-4C58-A93D-FC902CF01AD6.jpg"; 
+
+let html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        :root { --main: ${themeColor}; --card: ${cardColor}; }
+        
+        body {
+            font-family: -apple-system, sans-serif;
+            background-color: ${bgColor};
+            color: white; margin: 0; padding: 0;
+            overflow-x: hidden; -webkit-user-select: none;
+        }
+
+        #toast {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 0, 0, 0.9); color: white;
+            padding: 10px 25px; border-radius: 50px; font-size: 13px; font-weight: bold;
+            opacity: 0; transition: 0.4s; z-index: 10001; box-shadow: 0 0 20px var(--main);
+            pointer-events: none; white-space: nowrap;
+        }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -1; width: 100%; height: 100%; opacity: 0.5; }
+
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10000;
+        }
+        
+        /* แก้ไขส่วนของ Logo Container */
+        .vx-logo {
+            width: 100px; height: 100px; border: 4px solid var(--main);
+            border-radius: 25px; display: flex; justify-content: center;
+            align-items: center; box-shadow: 0 0 40px var(--main);
+            animation: pulse 1.5s infinite; margin-bottom: 25px;
+            overflow: hidden; /* กันรูปเลยขอบ */
+        }
+        
+        /* สไตล์ของรูปภาพไอคอน */
+        .vx-logo img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 5px var(--main));
+        }
+
+        .progress-container { width: 70%; height: 6px; background: #222; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
+        .bar { width: 0%; height: 100%; background: var(--main); box-shadow: 0 0 20px var(--main); }
+
+        #content { display: none; padding: 20px; animation: slideIn 0.6s ease-out; padding-bottom: 50px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .version-tag { background: var(--main); color: white; font-size: 11px; font-weight: 900; padding: 4px 12px; border-radius: 6px; box-shadow: 0 0 15px var(--main); }
+
+        .card {
+            background: var(--card); border-radius: 20px; padding: 18px;
+            margin-bottom: 15px; border: 1px solid #1a1a1a;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .section-title { font-size: 12px; color: var(--main); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; font-weight: 900; display: flex; align-items: center; }
+        .section-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--main), transparent); margin-left: 10px; opacity: 0.3; }
+
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1a1a1a; }
+        .item:last-child { border-bottom: none; }
+        .item-label b { display: block; font-size: 14px; color: #eee; }
+        .item-label span { font-size: 11px; color: #666; }
+
+        .switch { position: relative; width: 42px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #333; transition: .3s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background: var(--main); box-shadow: 0 0 15px var(--main); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .game-card { background: #151515; border-radius: 18px; padding: 15px; text-align: center; border: 1px solid #222; }
+        .game-img { width: 55px; height: 55px; border-radius: 12px; margin-bottom: 10px; border: 1px solid var(--main); }
+        .btn-open { background: var(--main); border: none; color: white; width: 100%; padding: 10px; border-radius: 8px; font-size: 11px; font-weight: bold; }
+
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div id="toast">SYSTEM ACTIVATED!</div>
+
+    <div id="loader">
+        <div class="vx-logo">
+            <img src="${appLogo}" alt="Logo">
+        </div>
+        <div style="font-size:12px; color:var(--main); margin-bottom:15px; letter-spacing:3px; font-weight:bold">VAIPERX PANEL OB52</div>
+        <div class="progress-container"><div class="bar" id="bar"></div></div>
+        <div id="p-text" style="margin-top:10px; font-size:14px; color:#444">0%</div>
+    </div>
+
+    <div id="content">
+        <div class="header">
+            <h1 style="margin:0; font-size:24px; font-weight:900">VAIPERX <span style="color:var(--main)">PANEL</span></h1>
+            <div class="version-tag">Premium</div>
+        </div>
+
+        <div class="card" style="border: 1px solid #f005; background: linear-gradient(145deg, #0f0f0f, #1a0505);">
+            <div class="section-title">🛡️ Anti-Ban Security (ระบบป้องกัน)</div>
+            <div class="item">
+                <div class="item-label"><b>Bypass Anticheat</b><span>ข้ามการตรวจจับไฟล์ระบบ</span></div>
+                <label class="switch"><input type="checkbox" onchange="handleToggle(this, 'heavy', '🛡️ Bypass On')"><span class="slider"></span></label>
+            </div>
+            <div class="item">
+                <div class="item-label"><b>Anti-Report 100%</b><span>กันรีพอร์ต</span></div>
+                <label class="switch"><input type="checkbox" onchange="handleToggle(this, 'medium', '🛡️ Anti-Report On')"><span class="slider"></span></label>
+            </div>
+            <div class="item">
+                <div class="item-label"><b>Fix Blacklist</b><span>แก้รหัสติดดำ / จับคู่ช้า</span></div>
+                <label class="switch"><input type="checkbox" onchange="handleToggle(this, 'heavy', '🛡️ Clean Blacklist')"><span class="slider"></span></label>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">🎯 AIMBOT & DRAG (ช่วยดึง/ดูด)</div>
+            <div class="item">
+                <div class="item-label"><b>Enable
+                 Headshot</b><span>เปิดใช้งานดูดหัว</span></div>
+                <label class="switch"><input type="checkbox" onchange="handleToggle(this, 'heavy', '🎯 Magnetic On')"><span class="slider"></span></label>
+            </div>
+            <div class="item">
+                <div class="item-label"><b>Auto Drag Head</b><span>ช่วยลากหัว (ดึงเป้าขึ้นง่าย)</span></div>
+                <label class="switch"><input type="checkbox" onchange="handleToggle(this, 'medium', '🎯 Drag Assist On')"><span class="slider"></span></label>
+            </div>
+            <div class="item">
+                <div class="item-label"><b>Regedit Headshot</b><span>เพิ่มความคมในการยิงหัว</span></div>
+                <label class="switch"><input type="checkbox" onchange="handleToggle(this, 'light', '🎯 Regedit Active')"><span class="slider"></span></label>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">🚀 System Optimizer</div>
+            <div class="item">
+                <div class="item-label"><b>Ultra FPS Boost</b><span>ปลดล็อคเฟรมเรตสูงสุด</span></div>
+                <label class="switch"><input type="checkbox" onchange="handleToggle(this, 'medium', '🚀 FPS Boosted')"><span class="slider"></span></label>
+            </div>
+            <div class="item">
+                <div class="item-label"><b>Sensitivity X/Y</b><span>ปรับความไวการตอบสนอง</span></div>
+                <label class="switch"><input type="checkbox" onchange="handleToggle(this, 'light', '🚀 Sensitivity Set')"><span class="slider"></span></label>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">📲 Supported Launch</div>
+            <div class="game-grid">
+                <div class="game-card">
+                    <img src="${ffIcon}" class="game-img"><br>
+                    <button class="btn-open" onclick="launch('freefire://')">FREE FIRE</button>
+                </div>
+                <div class="game-card">
+                    <img src="${ffIcon}" class="game-img"><br>
+                    <button class="btn-open" onclick="launch('freefiremax://')">FF MAX</button>
+                </div>
+            </div>
+        </div>
+        
+        <p style="text-align:center; color:#444; font-size:10px; font-weight:bold; letter-spacing:2px">VAIPERX PANEL OB52 © 2026</p>
+    </div>
+
+    <script>
+        function haptic(t) { completion("haptic:" + t); }
+        
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 1500);
+        }
+
+        function handleToggle(checkbox, hapticType, msg) {
+            if(checkbox.checked) {
+                haptic(hapticType);
+                showToast(msg);
+            }
+        }
+
+        function launch(u) { haptic('success'); setTimeout(() => { window.location.href = u; }, 200); }
+
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        let particles = [];
+        for(let i=0; i<40; i++){ particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2, v: Math.random()*1.2 }); }
+        function draw(){
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = '${themeColor}';
+            particles.forEach(p => {
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.s, 0, Math.PI*2); ctx.fill();
+                p.y -= p.v; if(p.y < 0) p.y = canvas.height;
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
+
+        let p = 0;
+        let int = setInterval(() => {
+            p += Math.floor(Math.random()*8)+2;
+            if(p >= 100){
+                p = 100; clearInterval(int); haptic('success');
+                setTimeout(() => {
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('content').style.display = 'block';
+                }, 500);
+            }
+            document.getElementById('bar').style.width = p+'%';
+            document.getElementById('p-text').innerText = p+'%';
+        }, 50);
+    </script>
+</body>
+</html>
+`;
+
+let wv = new WebView();
+await wv.loadHTML(html);
+wv.onPathComponentRequest = (p) => {
+    let t = p.split(":")[1];
+    if(t === "light") Device.haptic("light");
+    if(t === "medium") Device.haptic("medium");
+    if(t === "heavy") Device.haptic("heavy");
+    if(t === "success") Device.haptic("success");
+};
+await wv.present();
